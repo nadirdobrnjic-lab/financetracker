@@ -34,7 +34,8 @@ public class TransactionManager {
             list.add(new Transaction(
                     d.getString("type"),
                     d.getDouble("amount"),
-                    d.getString("description")
+                    d.getString("description"),
+                    d.getString("category")
             ));
         }
         return list;
@@ -64,7 +65,7 @@ public class TransactionManager {
 
 
     public void deleteTransaction(Transaction t) {
-        // Precizno brisanje po type, amount i description
+
         Bson filter = and(
                 eq("type", t.getType()),
                 eq("amount", t.getAmount()),
