@@ -1,15 +1,17 @@
-
 package financeapp;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 
-public class TransactionManager {
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.and;
 
+public class TransactionManager {
 
     private final MongoCollection<Document> collection;
 
@@ -17,6 +19,7 @@ public class TransactionManager {
         MongoDatabase db = MongoDBConnection.getDatabase();
         collection = db.getCollection("transactions");
     }
+
 
     public void addTransaction(Transaction t) {
         collection.insertOne(t.toDocument());
@@ -29,16 +32,14 @@ public class TransactionManager {
         while (cursor.hasNext()) {
             Document d = cursor.next();
             list.add(new Transaction(
-
                     d.getString("type"),
                     d.getDouble("amount"),
                     d.getString("description")
             ));
         }
-
         return list;
-
     }
+
 
     public double getTotalIncome() {
         double total = 0;
@@ -49,6 +50,7 @@ public class TransactionManager {
         }
         return total;
     }
+
 
     public double getTotalExpense() {
         double total = 0;
@@ -61,6 +63,14 @@ public class TransactionManager {
     }
 
 
+    public void deleteTransaction(Transaction t) {
+        // Precizno brisanje po type, amount i description
+        Bson filter = and(
+                eq("type", t.getType()),
+                eq("amount", t.getAmount()),
+                eq("description", t.getDescription())
+        );
 
-
+        collection.deleteOne(filter);
+    }
 }

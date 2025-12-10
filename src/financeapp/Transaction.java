@@ -21,9 +21,7 @@ public class Transaction {
         return doc;
     }
 
-    // ---------------------
-    // SETTERS (DODANO)
-    // ---------------------
+
     public void setType(String type) {
         this.type = type;
     }
@@ -36,9 +34,7 @@ public class Transaction {
         this.description = description;
     }
 
-    // ---------------------
-    // GETTERS
-    // ---------------------
+
     public String getType() {
         return type;
     }

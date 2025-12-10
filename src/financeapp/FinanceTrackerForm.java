@@ -15,6 +15,7 @@ public class FinanceTrackerForm {
     private JLabel balanceLabel;
     private JPanel mainPanel;
     private JButton updateButton;
+    private JButton deleteButton;
 
     private TransactionManager manager;
 
@@ -23,9 +24,7 @@ public class FinanceTrackerForm {
         loadDataIntoTable();
         updateSummary();
 
-        // --------------------
-        // ADD NEW TRANSACTION
-        // --------------------
+
         addButton.addActionListener(e -> {
             try {
                 String type = (String) typeCombo.getSelectedItem();
@@ -51,15 +50,14 @@ public class FinanceTrackerForm {
             }
         });
 
-        // --------------------
-        // UPDATE TRANSACTION
-        // --------------------
+
         updateButton.addActionListener(e -> updateTransaction());
+
+
+        deleteButton.addActionListener(e -> deleteTransaction());
     }
 
-    // -----------------------------
-    // UPDATE TRANSACTION FUNCTION
-    // -----------------------------
+
     private void updateTransaction() {
         int selectedRow = transactionTable.getSelectedRow();
 
@@ -70,10 +68,8 @@ public class FinanceTrackerForm {
 
         DefaultTableModel model = (DefaultTableModel) transactionTable.getModel();
 
-        // New values from GUI fields
         String newType = (String) typeCombo.getSelectedItem();
         double newAmount;
-
         try {
             newAmount = Double.parseDouble(amountField.getText());
         } catch (NumberFormatException ex) {
@@ -87,12 +83,12 @@ public class FinanceTrackerForm {
             return;
         }
 
-        // Update table
+
         model.setValueAt(newType, selectedRow, 0);
         model.setValueAt(newAmount, selectedRow, 1);
         model.setValueAt(newDesc, selectedRow, 2);
 
-        // Update internal list
+
         Transaction t = manager.getAllTransactions().get(selectedRow);
         t.setType(newType);
         t.setAmount(newAmount);
@@ -103,9 +99,37 @@ public class FinanceTrackerForm {
         JOptionPane.showMessageDialog(null, "Updated successfully!");
     }
 
-    // -----------------------------
-    // LOAD ALL DATA INTO TABLE
-    // -----------------------------
+
+    private void deleteTransaction() {
+        int selectedRow = transactionTable.getSelectedRow();
+
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(null, "Odaberite red za brisanje.");
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(
+                null,
+                "Jeste li sigurni da želite izbrisati ovu transakciju?",
+                "Potvrda brisanja",
+                JOptionPane.YES_NO_OPTION
+        );
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            Transaction t = manager.getAllTransactions().get(selectedRow);
+
+
+            manager.deleteTransaction(t);
+
+
+            loadDataIntoTable();
+            updateSummary();
+
+            JOptionPane.showMessageDialog(null, "Transakcija obrisana.");
+        }
+    }
+
+
     private void loadDataIntoTable() {
         ArrayList<Transaction> list = manager.getAllTransactions();
         DefaultTableModel model = new DefaultTableModel();
@@ -123,9 +147,6 @@ public class FinanceTrackerForm {
         transactionTable.setModel(model);
     }
 
-    // -----------------------------
-    // SUMMARY LABEL UPDATE
-    // -----------------------------
     private void updateSummary() {
         double income = manager.getTotalIncome();
         double expense = manager.getTotalExpense();
