@@ -67,6 +67,9 @@ ažuriranje tabele i labela
 -Main
 Pokreće aplikaciju i prikazuje GUI.
 
+-MongoDBConnection
+Povezuje aplikaciju sa bazom podataka.
+
 
 -AUTOR:
 IME I PREZIME: Nadir Dobrnjić
