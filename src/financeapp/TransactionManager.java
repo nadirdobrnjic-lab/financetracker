@@ -20,11 +20,9 @@ public class TransactionManager {
         collection = db.getCollection("transactions");
     }
 
-
     public void addTransaction(Transaction t) {
         collection.insertOne(t.toDocument());
     }
-
 
     public ArrayList<Transaction> getAllTransactions() {
         ArrayList<Transaction> list = new ArrayList<>();
@@ -41,7 +39,6 @@ public class TransactionManager {
         return list;
     }
 
-
     public double getTotalIncome() {
         double total = 0;
         for (Transaction t : getAllTransactions()) {
@@ -51,7 +48,6 @@ public class TransactionManager {
         }
         return total;
     }
-
 
     public double getTotalExpense() {
         double total = 0;
@@ -63,15 +59,22 @@ public class TransactionManager {
         return total;
     }
 
-
     public void deleteTransaction(Transaction t) {
-
         Bson filter = and(
                 eq("type", t.getType()),
                 eq("amount", t.getAmount()),
                 eq("description", t.getDescription())
         );
-
         collection.deleteOne(filter);
+    }
+
+    public void updateTransaction(Transaction oldTransaction, double newAmount) {
+        Bson filter = and(
+                eq("type", oldTransaction.getType()),
+                eq("amount", oldTransaction.getAmount()),
+                eq("description", oldTransaction.getDescription())
+        );
+        Document updated = new Document("$set", new Document("amount", newAmount));
+        collection.updateOne(filter, updated);
     }
 }
