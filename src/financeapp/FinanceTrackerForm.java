@@ -2,7 +2,10 @@ package financeapp;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FinanceTrackerForm {
     private JTextField amountField;
@@ -17,6 +20,7 @@ public class FinanceTrackerForm {
     private JLabel expenseLabel;
     private JLabel balanceLabel;
     private JPanel mainPanel;
+    private JButton exportButton;
 
     private TransactionManager manager;
 
@@ -62,6 +66,9 @@ public class FinanceTrackerForm {
 
         updateButton.addActionListener(e -> updateTransaction());
         deleteButton.addActionListener(e -> deleteTransaction());
+
+
+        exportButton.addActionListener(e -> exportData());
     }
 
     private void updateTransaction() {
@@ -164,5 +171,54 @@ public class FinanceTrackerForm {
 
     public JPanel getMainPanel() {
         return mainPanel;
+    }
+
+    private void exportData() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Odaberite lokaciju za spremanje");
+
+        int result = fileChooser.showSaveDialog(null);
+        if (result != JFileChooser.APPROVE_OPTION) return;
+
+        String path = fileChooser.getSelectedFile().getAbsolutePath();
+
+        try {
+            double income = manager.getTotalIncome();
+            double expense = manager.getTotalExpense();
+            double balance = income - expense;
+
+            ArrayList<Transaction> list = manager.getAllTransactions();
+
+
+            Map<String, Double> kategorije = new HashMap<>();
+            for (Transaction t : list) {
+                if (t.getType().equals("Rashod")) {
+                    kategorije.put(
+                            t.getCategory(),
+                            kategorije.getOrDefault(t.getCategory(), 0.0) + t.getAmount()
+                    );
+                }
+            }
+
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("Ukupni prihod: ").append(income).append("\n");
+            sb.append("Ukupni rashod: ").append(expense).append("\n");
+            sb.append("Stanje: ").append(balance).append("\n\n");
+
+            sb.append("Rashodi po kategorijama:\n");
+            for (String k : kategorije.keySet()) {
+                sb.append(k).append(": ").append(kategorije.get(k)).append("\n");
+            }
+
+            FileWriter writer = new FileWriter(path + ".txt");
+            writer.write(sb.toString());
+            writer.close();
+
+            JOptionPane.showMessageDialog(null, "Podaci uspješno eksportovani!");
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(null, "Greška pri eksportovanju.");
+        }
     }
 }
