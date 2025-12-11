@@ -27,116 +27,104 @@ public class FinanceTrackerForm {
     public FinanceTrackerForm() {
         manager = new TransactionManager();
 
+        typeCombo.removeAllItems();
+        vrsteCombo.removeAllItems();
+
         typeCombo.addItem("Prihod");
         typeCombo.addItem("Rashod");
 
         String[] kategorije = {"Plata", "Hrana", "Racuni", "Zabava", "Prijevoz", "Ostalo"};
-        for (String k : kategorije) {
-            vrsteCombo.addItem(k);
-        }
+        for (String k : kategorije) vrsteCombo.addItem(k);
 
         loadDataIntoTable();
         updateSummary();
 
-        addButton.addActionListener(e -> {
-            try {
-                String type = (String) typeCombo.getSelectedItem();
-                String category = (String) vrsteCombo.getSelectedItem();
-                double amount = Double.parseDouble(amountField.getText());
-                String description = descriptionField.getText();
-
-                if (description.isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "Description cannot be empty.");
-                    return;
-                }
-
-                Transaction t = new Transaction(type, amount, description, category);
-                manager.addTransaction(t);
-
-                loadDataIntoTable();
-                updateSummary();
-
-                amountField.setText("");
-                descriptionField.setText("");
-
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(null, "Amount must be a number");
-            }
-        });
-
+        addButton.addActionListener(e -> addTransaction());
         updateButton.addActionListener(e -> updateTransaction());
         deleteButton.addActionListener(e -> deleteTransaction());
-
-
         exportButton.addActionListener(e -> exportData());
     }
 
-    private void updateTransaction() {
-        int selectedRow = transactionTable.getSelectedRow();
-
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(null, "Select a row to update.");
-            return;
-        }
-
-        DefaultTableModel model = (DefaultTableModel) transactionTable.getModel();
-
-        String newType = (String) typeCombo.getSelectedItem();
-        String newCategory = (String) vrsteCombo.getSelectedItem();
-        double newAmount;
+    private void addTransaction() {
         try {
-            newAmount = Double.parseDouble(amountField.getText());
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(null, "Amount must be a number.");
-            return;
-        }
+            String type = (String) typeCombo.getSelectedItem();
+            String category = (String) vrsteCombo.getSelectedItem();
+            double amount = Double.parseDouble(amountField.getText());
+            String description = descriptionField.getText();
 
-        String newDesc = descriptionField.getText();
-        if (newDesc.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Description cannot be empty.");
-            return;
-        }
+            if (description.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Opis ne može biti prazan.");
+                return;
+            }
 
-        model.setValueAt(newType, selectedRow, 0);
-        model.setValueAt(newAmount, selectedRow, 1);
-        model.setValueAt(newDesc, selectedRow, 2);
-        model.setValueAt(newCategory, selectedRow, 3);
-
-        Transaction t = manager.getAllTransactions().get(selectedRow);
-        t.setType(newType);
-        t.setAmount(newAmount);
-        t.setDescription(newDesc);
-        t.setCategory(newCategory);
-
-        updateSummary();
-
-        JOptionPane.showMessageDialog(null, "Updated successfully!");
-    }
-
-    private void deleteTransaction() {
-        int selectedRow = transactionTable.getSelectedRow();
-
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(null, "Odaberite red za brisanje.");
-            return;
-        }
-
-        int confirm = JOptionPane.showConfirmDialog(
-                null,
-                "Jeste li sigurni da želite izbrisati ovu transakciju?",
-                "Potvrda brisanja",
-                JOptionPane.YES_NO_OPTION
-        );
-
-        if (confirm == JOptionPane.YES_OPTION) {
-            Transaction t = manager.getAllTransactions().get(selectedRow);
-            manager.deleteTransaction(t);
+            Transaction t = new Transaction(type, amount, description, category);
+            manager.addTransaction(t);
 
             loadDataIntoTable();
             updateSummary();
 
-            JOptionPane.showMessageDialog(null, "Transakcija obrisana.");
+            amountField.setText("");
+            descriptionField.setText("");
+
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(null, "Iznos mora biti broj.");
         }
+    }
+
+    private void updateTransaction() {
+        int selectedRow = transactionTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(null, "Odaberite red.");
+            return;
+        }
+
+        try {
+            String newType = (String) typeCombo.getSelectedItem();
+            String newCategory = (String) vrsteCombo.getSelectedItem();
+            double newAmount = Double.parseDouble(amountField.getText());
+            String newDesc = descriptionField.getText();
+
+            if (newDesc.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Opis ne može biti prazan.");
+                return;
+            }
+
+            DefaultTableModel model = (DefaultTableModel) transactionTable.getModel();
+            model.setValueAt(newType, selectedRow, 0);
+            model.setValueAt(newAmount, selectedRow, 1);
+            model.setValueAt(newDesc, selectedRow, 2);
+            model.setValueAt(newCategory, selectedRow, 3);
+
+            Transaction t = manager.getAllTransactions().get(selectedRow);
+            t.setType(newType);
+            t.setAmount(newAmount);
+            t.setDescription(newDesc);
+            t.setCategory(newCategory);
+
+            updateSummary();
+            JOptionPane.showMessageDialog(null, "Ažurirano!");
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(null, "Greška pri ažuriranju.");
+        }
+    }
+
+    private void deleteTransaction() {
+        int selectedRow = transactionTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(null, "Odaberite red.");
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(null, "Obrisati?", "Potvrda", JOptionPane.YES_NO_OPTION);
+        if (confirm != JOptionPane.YES_OPTION) return;
+
+        Transaction t = manager.getAllTransactions().get(selectedRow);
+        manager.deleteTransaction(t);
+
+        loadDataIntoTable();
+        updateSummary();
+        JOptionPane.showMessageDialog(null, "Obrisano.");
     }
 
     private void loadDataIntoTable() {
@@ -175,7 +163,7 @@ public class FinanceTrackerForm {
 
     private void exportData() {
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Odaberite lokaciju za spremanje");
+        fileChooser.setDialogTitle("Odaberite lokaciju");
 
         int result = fileChooser.showSaveDialog(null);
         if (result != JFileChooser.APPROVE_OPTION) return;
@@ -188,18 +176,14 @@ public class FinanceTrackerForm {
             double balance = income - expense;
 
             ArrayList<Transaction> list = manager.getAllTransactions();
-
-
             Map<String, Double> kategorije = new HashMap<>();
+
             for (Transaction t : list) {
                 if (t.getType().equals("Rashod")) {
-                    kategorije.put(
-                            t.getCategory(),
-                            kategorije.getOrDefault(t.getCategory(), 0.0) + t.getAmount()
-                    );
+                    kategorije.put(t.getCategory(),
+                            kategorije.getOrDefault(t.getCategory(), 0.0) + t.getAmount());
                 }
             }
-
 
             StringBuilder sb = new StringBuilder();
             sb.append("Ukupni prihod: ").append(income).append("\n");
@@ -207,18 +191,17 @@ public class FinanceTrackerForm {
             sb.append("Stanje: ").append(balance).append("\n\n");
 
             sb.append("Rashodi po kategorijama:\n");
-            for (String k : kategorije.keySet()) {
+            for (String k : kategorije.keySet())
                 sb.append(k).append(": ").append(kategorije.get(k)).append("\n");
-            }
 
             FileWriter writer = new FileWriter(path + ".txt");
             writer.write(sb.toString());
             writer.close();
 
-            JOptionPane.showMessageDialog(null, "Podaci uspješno eksportovani!");
+            JOptionPane.showMessageDialog(null, "Eksportovano!");
 
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(null, "Greška pri eksportovanju.");
+            JOptionPane.showMessageDialog(null, "Greška pri eksportu.");
         }
     }
 }
