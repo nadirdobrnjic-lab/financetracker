@@ -64,6 +64,7 @@ public class FinanceTrackerForm {
             descriptionField.setText("");
 
         } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(null, "Unesite validan broj!");
         }
     }
 
@@ -92,6 +93,7 @@ public class FinanceTrackerForm {
             updateSummary();
 
         } catch (Exception ex) {
+            JOptionPane.showMessageDialog(null, "Greška pri izmjeni!");
         }
     }
 
@@ -153,34 +155,42 @@ public class FinanceTrackerForm {
         String path = fileChooser.getSelectedFile().getAbsolutePath();
 
         try {
-            double income = manager.getTotalIncome();
-            double expense = manager.getTotalExpense();
-            double balance = income - expense;
-
             ArrayList<Transaction> list = manager.getAllTransactions();
+
+            double income = 0;
+            double expense = 0;
             Map<String, Double> kategorije = new HashMap<>();
 
             for (Transaction t : list) {
-                if (t.getType().equals("Rashod")) {
-                    kategorije.put(t.getCategory(),
-                            kategorije.getOrDefault(t.getCategory(), 0.0) + t.getAmount());
+                String type = t.getType();
+                if ("Prihod".equals(type)) {
+                    income += t.getAmount();
+                } else if ("Rashod".equals(type)) {
+                    expense += t.getAmount();
+                    kategorije.merge(t.getCategory(), t.getAmount(), Double::sum);
                 }
             }
 
-            StringBuilder sb = new StringBuilder();
-            sb.append("Ukupni prihod: ").append(income).append("\n");
-            sb.append("Ukupni rashod: ").append(expense).append("\n");
-            sb.append("Stanje: ").append(balance).append("\n\n");
+            double balance = income - expense;
 
-            sb.append("Rashodi po kategorijama:\n");
-            for (String k : kategorije.keySet())
-                sb.append(k).append(": ").append(kategorije.get(k)).append("\n");
+            try (FileWriter writer = new FileWriter(path + ".txt")) {
+                StringBuilder sb = new StringBuilder();
 
-            FileWriter writer = new FileWriter(path + ".txt");
-            writer.write(sb.toString());
-            writer.close();
+                sb.append("Ukupni prihod: ").append(income).append("\n");
+                sb.append("Ukupni rashod: ").append(expense).append("\n");
+                sb.append("Stanje: ").append(balance).append("\n\n");
+
+                sb.append("Rashodi po kategorijama:\n");
+                for (var entry : kategorije.entrySet()) {
+                    sb.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+                }
+
+                writer.write(sb.toString());
+            }
 
         } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Greška pri eksportu!");
         }
     }
 }
